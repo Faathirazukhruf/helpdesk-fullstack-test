@@ -113,7 +113,11 @@ const handleStatusChange = async (newStatus) => {
     }
 
     const response = await apiClient.patch(`/tickets/${ticketId.value}`, payload)
-    ticket.value = response.data
+    const prevComments = ticket.value?.comments || []
+    ticket.value = {
+      ...response.data,
+      comments: response.data.comments || prevComments,
+    }
     actionMessage.value = `Status tiket berhasil diubah menjadi "${newStatus}".`
   } catch (err) {
     errorMessage.value = err.response?.data?.error || 'Gagal mengubah status tiket.'
@@ -129,7 +133,11 @@ const handleAssignToMe = async () => {
     const response = await apiClient.patch(`/tickets/${ticketId.value}`, {
       assignee_id: authStore.user.id,
     })
-    ticket.value = response.data
+    const prevComments = ticket.value?.comments || []
+    ticket.value = {
+      ...response.data,
+      comments: response.data.comments || prevComments,
+    }
     actionMessage.value = 'Tiket berhasil Anda ambil alih.'
   } catch (err) {
     errorMessage.value = err.response?.data?.error || 'Gagal menetapkan tiket.'
@@ -147,7 +155,11 @@ const handlePriorityChange = async (newPriority) => {
     const response = await apiClient.patch(`/tickets/${ticketId.value}`, {
       priority: newPriority,
     })
-    ticket.value = response.data
+    const prevComments = ticket.value?.comments || []
+    ticket.value = {
+      ...response.data,
+      comments: response.data.comments || prevComments,
+    }
     actionMessage.value = `Prioritas tiket berhasil diperbarui ke "${newPriority}".`
   } catch (err) {
     errorMessage.value = err.response?.data?.error || 'Gagal mengubah prioritas tiket.'

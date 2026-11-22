@@ -54,14 +54,14 @@ func main() {
 	commentHandler := handler.NewCommentHandler(commentRepo, ticketRepo)
 	userHandler := handler.NewUserHandler(userRepo)
 
-	authMiddleware := middleware.AuthMiddleware(cfg.JWTSecret)
-	adminOnly := middleware.RequireRoleWithDB(func(ctx context.Context, userID int64) (model.UserRole, error) {
+	authMiddleware := middleware.AuthMiddlewareWithRoleGetter(cfg.JWTSecret, func(ctx context.Context, userID int64) (model.UserRole, error) {
 		u, err := userRepo.GetByID(ctx, userID)
 		if err != nil {
 			return "", err
 		}
 		return u.Role, nil
-	}, model.RoleAdmin)
+	})
+	adminOnly := middleware.RequireRole(model.RoleAdmin)
 
 	// Public Routes
 	mux.HandleFunc("GET /api/health", healthHandler(db))

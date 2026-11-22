@@ -16,9 +16,18 @@ const (
 	UserClaimsKey contextKey = "user_claims"
 )
 
+// RoleGetterFunc adalah tipe fungsi untuk mengambil peran pengguna saat ini dari database.
+type RoleGetterFunc func(ctx context.Context, userID int64) (model.UserRole, error)
+
 // AuthMiddleware memvalidasi token JWT dari header Authorization (Bearer <token>)
 // dan menyuntikkan data klaim user ke dalam context request.
 func AuthMiddleware(secret string) func(http.Handler) http.Handler {
+	return AuthMiddlewareWithRoleGetter(secret, nil)
+}
+
+// AuthMiddlewareWithRoleGetter memvalidasi token JWT dan menyinkronkan peran aktual pengguna
+// langsung dari database sehingga demotion atau penonaktifan akun berlaku seketika pada semua endpoint.
+func AuthMiddlewareWithRoleGetter(secret string, roleGetter RoleGetterFunc) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -39,6 +48,16 @@ func AuthMiddleware(secret string) func(http.Handler) http.Handler {
 				return
 			}
 
+			// Sinkronkan peran pengguna langsung dari database jika roleGetter disediakan
+			if roleGetter != nil {
+				actualRole, err := roleGetter(r.Context(), claims.UserID)
+				if err != nil {
+					writeError(w, "User account not found or deactivated", http.StatusUnauthorized)
+					return
+				}
+				claims.Role = actualRole
+			}
+
 			// Simpan claims ke dalam request context
 			ctx := context.WithValue(r.Context(), UserClaimsKey, claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -48,12 +67,6 @@ func AuthMiddleware(secret string) func(http.Handler) http.Handler {
 
 // RequireRole membatasi akses endpoint hanya untuk peran pengguna tertentu (RBAC).
 func RequireRole(allowedRoles ...model.UserRole) func(http.Handler) http.Handler {
-	return RequireRoleWithDB(nil, allowedRoles...)
-}
-
-// RequireRoleWithDB membatasi akses endpoint dengan opsi validasi role aktual ke database,
-// mencegah penyalahgunaan token lama yang belum kadaluarsa setelah hak akses dicabut/di-demote.
-func RequireRoleWithDB(roleChecker func(ctx context.Context, userID int64) (model.UserRole, error), allowedRoles ...model.UserRole) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := GetUserClaims(r.Context())
@@ -62,20 +75,9 @@ func RequireRoleWithDB(roleChecker func(ctx context.Context, userID int64) (mode
 				return
 			}
 
-			currentRole := claims.Role
-			// Verifikasi role aktual dari database jika checker disediakan
-			if roleChecker != nil {
-				actualRole, err := roleChecker(r.Context(), claims.UserID)
-				if err != nil {
-					writeError(w, "Forbidden: unable to verify user permissions", http.StatusForbidden)
-					return
-				}
-				currentRole = actualRole
-			}
-
 			allowed := false
 			for _, role := range allowedRoles {
-				if currentRole == role {
+				if claims.Role == role {
 					allowed = true
 					break
 				}

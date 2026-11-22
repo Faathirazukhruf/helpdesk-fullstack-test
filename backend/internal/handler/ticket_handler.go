@@ -86,6 +86,10 @@ func (h *TicketHandler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "Category is required", http.StatusBadRequest)
 		return
 	}
+	if len(req.Category) > 100 {
+		sendJSONError(w, "Category cannot exceed 100 characters", http.StatusBadRequest)
+		return
+	}
 
 	if req.Priority == "" {
 		req.Priority = model.PriorityMedium
@@ -332,6 +336,13 @@ func (h *TicketHandler) UpdateTicket(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sendJSONError(w, "Failed to update ticket", http.StatusInternalServerError)
 		return
+	}
+
+	// Sertakan riwayat komentar agar data diskusi pada client tidak hilang sesudah update
+	isStaff := claims.Role == model.RoleAgent || claims.Role == model.RoleAdmin
+	comments, err := h.commentRepo.ListByTicketID(r.Context(), ticketID, isStaff)
+	if err == nil {
+		updatedTicket.Comments = comments
 	}
 
 	sendJSON(w, updatedTicket, http.StatusOK)

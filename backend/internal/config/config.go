@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -17,17 +18,27 @@ type Config struct {
 	JWTSecret  string
 }
 
-// Load membaca environment variables dan mengisi nilai default bila tidak diset.
+// Load membaca environment variables dan mewajibkan kredensial rahasia diset via env.
 func Load() *Config {
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("FATAL: Environment variable JWT_SECRET is required and must not be empty")
+	}
+
+	dbPassword := os.Getenv("DB_PASSWORD")
+	if dbPassword == "" {
+		log.Fatal("FATAL: Environment variable DB_PASSWORD is required and must not be empty")
+	}
+
 	return &Config{
 		Port:       getEnv("PORT", "8080"),
 		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnv("DB_PORT", "5432"),
 		DBUser:     getEnv("DB_USER", "helpdesk_user"),
-		DBPassword: getEnv("DB_PASSWORD", "helpdesk_secret"),
+		DBPassword: dbPassword,
 		DBName:     getEnv("DB_NAME", "helpdesk_db"),
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
-		JWTSecret:  getEnv("JWT_SECRET", "helpdesk-secret-key-change-in-production"),
+		JWTSecret:  jwtSecret,
 	}
 }
 

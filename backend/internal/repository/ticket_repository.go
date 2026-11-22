@@ -112,9 +112,13 @@ func (r *TicketRepository) List(ctx context.Context, f model.TicketFilter) ([]*m
 	}
 
 	if f.AssigneeID != nil {
-		conditions = append(conditions, fmt.Sprintf("t.assignee_id = $%d", argIdx))
-		args = append(args, *f.AssigneeID)
-		argIdx++
+		if *f.AssigneeID == 0 {
+			conditions = append(conditions, "t.assignee_id IS NULL")
+		} else {
+			conditions = append(conditions, fmt.Sprintf("t.assignee_id = $%d", argIdx))
+			args = append(args, *f.AssigneeID)
+			argIdx++
+		}
 	}
 
 	if f.Search != "" {

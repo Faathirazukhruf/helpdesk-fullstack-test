@@ -26,4 +26,6 @@ Thumbs.db
 
 # Local QA & Audit scratch
 docs/qa/
+docs/qa*
+docs/QA*
 

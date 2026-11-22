@@ -21,6 +21,7 @@ const errorMessage = ref('')
 const search = ref('')
 const statusFilter = ref('')
 const priorityFilter = ref('')
+const assigneeFilter = ref('')
 const sortBy = ref('created_at_desc')
 
 const fetchTickets = async (page = 1) => {
@@ -35,6 +36,7 @@ const fetchTickets = async (page = 1) => {
     if (search.value.trim()) params.search = search.value.trim()
     if (statusFilter.value) params.status = statusFilter.value
     if (priorityFilter.value) params.priority = priorityFilter.value
+    if (assigneeFilter.value !== '') params.assignee_id = assigneeFilter.value
 
     const response = await apiClient.get('/tickets', { params })
     tickets.value = response.data.data
@@ -47,7 +49,7 @@ const fetchTickets = async (page = 1) => {
 }
 
 // Watch filters: reset ke halaman 1 setiap kali filter berubah
-watch([statusFilter, priorityFilter, sortBy], () => {
+watch([statusFilter, priorityFilter, sortBy, assigneeFilter], () => {
   fetchTickets(1)
 })
 
@@ -102,7 +104,7 @@ onMounted(() => {
 
     <!-- Filter & Search Toolbar -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div :class="!authStore.isRequester ? 'lg:grid-cols-5' : 'lg:grid-cols-4'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- Pencarian Judul -->
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Cari Judul Tiket</label>
@@ -149,6 +151,19 @@ onMounted(() => {
             <option value="medium">Medium</option>
             <option value="high">High</option>
             <option value="urgent">Urgent</option>
+          </select>
+        </div>
+
+        <!-- Filter Penugasan (Khusus Staf) -->
+        <div v-if="!authStore.isRequester">
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Penugasan</label>
+          <select
+            v-model="assigneeFilter"
+            class="w-full py-2 px-3 text-sm border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+          >
+            <option value="">Semua Penugasan</option>
+            <option :value="authStore.user?.id">Ditugaskan ke Saya</option>
+            <option value="0">Belum Ditugaskan</option>
           </select>
         </div>
 
