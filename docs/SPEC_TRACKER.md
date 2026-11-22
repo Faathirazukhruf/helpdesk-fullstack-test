@@ -101,7 +101,7 @@ Total terdapat **10 Fase terukur**:
   - List tiket (`GET /api/tickets`) dengan pagination, status/priority/assignee filter, search, & pembatasan peran requester.
   - Detail tiket (`GET /api/tickets/{id}`).
   - Update tiket (`PATCH /api/tickets/{id}`) dengan validasi ketat status transition matrix.
-- [ ] **Fase 5: Comments & User Management (Admin)**
+- [x] **Fase 5: Comments & User Management (Admin)**
   - Tambah komentar publik / internal note (`POST /api/tickets/{id}/comments`).
   - Proteksi visibilitas *internal note* (hanya Agent & Admin).
   - Admin users endpoint: `GET /api/users` dan `PATCH /api/users/{id}/role`.

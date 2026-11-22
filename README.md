@@ -99,6 +99,39 @@ Database secara otomatis dimigrasikan dan diisi data akun awal saat backend pert
 
 ---
 
+### 6. Verifikasi Komentar & Admin User Management (Fase 5)
+
+1. **Tambah Komentar Publik / Catatan Internal:**
+   ```bash
+   # Komentar publik (bisa oleh Requester pemilik atau Agent/Admin)
+   curl -X POST http://localhost:8081/api/tickets/1/comments \
+     -H "Authorization: Bearer <TOKEN>" \
+     -H "Content-Type: application/json" \
+     -d '{"body":"Sedang kami tindaklanjuti","is_internal":false}'
+
+   # Catatan internal (khusus Agent/Admin, ditolak jika dibuat oleh Requester)
+   curl -X POST http://localhost:8081/api/tickets/1/comments \
+     -H "Authorization: Bearer <AGENT_TOKEN>" \
+     -H "Content-Type: application/json" \
+     -d '{"body":"Catatan internal staf: perlu ganti komponen","is_internal":true}'
+   ```
+
+2. **Lihat Daftar Pengguna (Khusus Admin):**
+   ```bash
+   curl http://localhost:8081/api/users \
+     -H "Authorization: Bearer <ADMIN_TOKEN>"
+   ```
+
+3. **Ubah Peran Pengguna (Khusus Admin):**
+   ```bash
+   curl -X PATCH http://localhost:8081/api/users/4/role \
+     -H "Authorization: Bearer <ADMIN_TOKEN>" \
+     -H "Content-Type: application/json" \
+     -d '{"role":"agent"}'
+   ```
+
+---
+
 ## Asumsi Teknis (Spesifikasi)
 
 1. **Format Role & Status**:
