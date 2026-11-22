@@ -14,6 +14,9 @@ import (
 
 	"helpdesk-backend/internal/config"
 	"helpdesk-backend/internal/database"
+	"helpdesk-backend/internal/handler"
+	"helpdesk-backend/internal/middleware"
+	"helpdesk-backend/internal/repository"
 )
 
 type HealthResponse struct {
@@ -40,8 +43,18 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// Go 1.22+ ServeMux routing dengan method pattern
+	// Inisialisasi Repository, Service, dan Handler
+	userRepo := repository.NewUserRepository(db)
+	authHandler := handler.NewAuthHandler(userRepo, cfg.JWTSecret)
+	authMiddleware := middleware.AuthMiddleware(cfg.JWTSecret)
+
+	// Public Routes
 	mux.HandleFunc("GET /api/health", healthHandler(db))
+	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
+	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+
+	// Protected Routes (Memerlukan token JWT)
+	mux.Handle("GET /api/me", authMiddleware(http.HandlerFunc(authHandler.Me)))
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,
