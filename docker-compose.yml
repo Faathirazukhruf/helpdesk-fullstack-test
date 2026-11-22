@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-helpdesk_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-helpdesk_secret}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be provided in .env}
       POSTGRES_DB: ${DB_NAME:-helpdesk_db}
     ports:
       - "${DB_PORT:-5432}:5432"
@@ -28,10 +28,10 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: ${DB_USER:-helpdesk_user}
-      DB_PASSWORD: ${DB_PASSWORD:-helpdesk_secret}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be provided in .env}
       DB_NAME: ${DB_NAME:-helpdesk_db}
       DB_SSLMODE: disable
-      JWT_SECRET: ${JWT_SECRET:-helpdesk-secret-key-change-in-production}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be provided in .env}
     ports:
       - "${PORT:-8081}:8080"
     depends_on:

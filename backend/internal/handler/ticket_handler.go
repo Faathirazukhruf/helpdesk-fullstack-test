@@ -162,9 +162,12 @@ func (h *TicketHandler) ListTickets(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if asgStr := q.Get("assignee_id"); asgStr != "" {
-		if asgID, err := strconv.ParseInt(asgStr, 10, 64); err == nil {
-			filter.AssigneeID = &asgID
+		asgID, err := strconv.ParseInt(asgStr, 10, 64)
+		if err != nil || asgID < 0 {
+			sendJSONError(w, "Invalid assignee_id parameter (must be a non-negative integer)", http.StatusBadRequest)
+			return
 		}
+		filter.AssigneeID = &asgID
 	}
 
 	// Pembatasan Akses: Requester dipaksa hanya melihat tiket miliknya sendiri

@@ -59,8 +59,16 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "Name is required", http.StatusBadRequest)
 		return
 	}
+	if len(req.Name) > 255 {
+		sendJSONError(w, "Name cannot exceed 255 characters", http.StatusBadRequest)
+		return
+	}
 	if req.Email == "" || !emailRegex.MatchString(req.Email) {
 		sendJSONError(w, "A valid email address is required", http.StatusBadRequest)
+		return
+	}
+	if len(req.Email) > 255 {
+		sendJSONError(w, "Email cannot exceed 255 characters", http.StatusBadRequest)
 		return
 	}
 	if len(req.Password) < 6 {
