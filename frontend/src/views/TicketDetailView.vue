@@ -138,6 +138,24 @@ const handleAssignToMe = async () => {
   }
 }
 
+// Handler ubah prioritas oleh Agent/Admin
+const handlePriorityChange = async (newPriority) => {
+  isUpdating.value = true
+  actionMessage.value = ''
+  errorMessage.value = ''
+  try {
+    const response = await apiClient.patch(`/tickets/${ticketId.value}`, {
+      priority: newPriority,
+    })
+    ticket.value = response.data
+    actionMessage.value = `Prioritas tiket berhasil diperbarui ke "${newPriority}".`
+  } catch (err) {
+    errorMessage.value = err.response?.data?.error || 'Gagal mengubah prioritas tiket.'
+  } finally {
+    isUpdating.value = false
+  }
+}
+
 // Handler kirim komentar / internal note
 const handleSubmitComment = async () => {
   if (!newComment.value.trim()) return
@@ -222,7 +240,22 @@ onMounted(() => {
                 <span class="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                   {{ ticket.category }}
                 </span>
-                <PriorityBadge :priority="ticket.priority" />
+                <div class="inline-flex items-center space-x-1.5">
+                  <PriorityBadge :priority="ticket.priority" />
+                  <select
+                    v-if="!authStore.isRequester && ticket.status !== 'Closed'"
+                    :value="ticket.priority"
+                    @change="handlePriorityChange($event.target.value)"
+                    :disabled="isUpdating"
+                    class="text-xs border-gray-300 rounded px-1.5 py-0.5 bg-white border text-gray-700 hover:border-gray-400 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                    title="Ubah prioritas tiket"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
                 <StatusBadge :status="ticket.status" />
               </div>
               <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ ticket.title }}</h1>
@@ -257,6 +290,14 @@ onMounted(() => {
             <div v-if="ticket.assignee_name">
               <span class="font-semibold text-gray-900 text-sm">{{ ticket.assignee_name }}</span>
               <span class="text-gray-500 block">{{ ticket.assignee_email }}</span>
+              <button
+                v-if="!authStore.isRequester && ticket.assignee_id !== authStore.user.id && ticket.status !== 'Closed'"
+                @click="handleAssignToMe"
+                :disabled="isUpdating"
+                class="text-indigo-600 hover:text-indigo-800 font-medium underline text-xs mt-1 inline-block"
+              >
+                Tugaskan ke Saya
+              </button>
             </div>
             <div v-else class="flex items-center space-x-2 mt-1">
               <span class="text-gray-400 italic">Belum ada</span>

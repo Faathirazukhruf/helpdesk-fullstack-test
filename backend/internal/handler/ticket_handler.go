@@ -74,6 +74,10 @@ func (h *TicketHandler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "Title is required", http.StatusBadRequest)
 		return
 	}
+	if len(req.Title) > 255 {
+		sendJSONError(w, "Title cannot exceed 255 characters", http.StatusBadRequest)
+		return
+	}
 	if req.Description == "" {
 		sendJSONError(w, "Description is required", http.StatusBadRequest)
 		return
@@ -124,13 +128,24 @@ func (h *TicketHandler) ListTickets(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := r.URL.Query()
-	page, _ := strconv.Atoi(q.Get("page"))
-	limit, _ := strconv.Atoi(q.Get("limit"))
-	if page <= 0 {
-		page = 1
+	page := 1
+	if pStr := q.Get("page"); pStr != "" {
+		p, err := strconv.Atoi(pStr)
+		if err != nil || p <= 0 || p > 1000000 {
+			sendJSONError(w, "Invalid page parameter, must be between 1 and 1,000,000", http.StatusBadRequest)
+			return
+		}
+		page = p
 	}
-	if limit <= 0 || limit > 100 {
-		limit = 10
+
+	limit := 10
+	if lStr := q.Get("limit"); lStr != "" {
+		l, err := strconv.Atoi(lStr)
+		if err != nil || l <= 0 || l > 100 {
+			sendJSONError(w, "Invalid limit parameter, must be between 1 and 100", http.StatusBadRequest)
+			return
+		}
+		limit = l
 	}
 
 	filter := model.TicketFilter{

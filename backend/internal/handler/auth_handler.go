@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 	"helpdesk-backend/internal/model"
 	"helpdesk-backend/internal/repository"
 )
+
+var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
 type AuthHandler struct {
 	userRepo  *repository.UserRepository
@@ -56,12 +59,16 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, "Name is required", http.StatusBadRequest)
 		return
 	}
-	if req.Email == "" || !strings.Contains(req.Email, "@") {
+	if req.Email == "" || !emailRegex.MatchString(req.Email) {
 		sendJSONError(w, "A valid email address is required", http.StatusBadRequest)
 		return
 	}
 	if len(req.Password) < 6 {
 		sendJSONError(w, "Password must be at least 6 characters long", http.StatusBadRequest)
+		return
+	}
+	if len(req.Password) > 72 {
+		sendJSONError(w, "Password cannot exceed 72 characters", http.StatusBadRequest)
 		return
 	}
 

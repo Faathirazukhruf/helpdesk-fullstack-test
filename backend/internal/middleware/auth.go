@@ -48,6 +48,12 @@ func AuthMiddleware(secret string) func(http.Handler) http.Handler {
 
 // RequireRole membatasi akses endpoint hanya untuk peran pengguna tertentu (RBAC).
 func RequireRole(allowedRoles ...model.UserRole) func(http.Handler) http.Handler {
+	return RequireRoleWithDB(nil, allowedRoles...)
+}
+
+// RequireRoleWithDB membatasi akses endpoint dengan opsi validasi role aktual ke database,
+// mencegah penyalahgunaan token lama yang belum kadaluarsa setelah hak akses dicabut/di-demote.
+func RequireRoleWithDB(roleChecker func(ctx context.Context, userID int64) (model.UserRole, error), allowedRoles ...model.UserRole) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := GetUserClaims(r.Context())
@@ -56,9 +62,20 @@ func RequireRole(allowedRoles ...model.UserRole) func(http.Handler) http.Handler
 				return
 			}
 
+			currentRole := claims.Role
+			// Verifikasi role aktual dari database jika checker disediakan
+			if roleChecker != nil {
+				actualRole, err := roleChecker(r.Context(), claims.UserID)
+				if err != nil {
+					writeError(w, "Forbidden: unable to verify user permissions", http.StatusForbidden)
+					return
+				}
+				currentRole = actualRole
+			}
+
 			allowed := false
 			for _, role := range allowedRoles {
-				if claims.Role == role {
+				if currentRole == role {
 					allowed = true
 					break
 				}

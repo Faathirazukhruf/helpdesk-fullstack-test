@@ -16,6 +16,7 @@ import (
 	"helpdesk-backend/internal/database"
 	"helpdesk-backend/internal/handler"
 	"helpdesk-backend/internal/middleware"
+	"helpdesk-backend/internal/model"
 	"helpdesk-backend/internal/repository"
 )
 
@@ -54,7 +55,13 @@ func main() {
 	userHandler := handler.NewUserHandler(userRepo)
 
 	authMiddleware := middleware.AuthMiddleware(cfg.JWTSecret)
-	adminOnly := middleware.RequireRole("admin")
+	adminOnly := middleware.RequireRoleWithDB(func(ctx context.Context, userID int64) (model.UserRole, error) {
+		u, err := userRepo.GetByID(ctx, userID)
+		if err != nil {
+			return "", err
+		}
+		return u.Role, nil
+	}, model.RoleAdmin)
 
 	// Public Routes
 	mux.HandleFunc("GET /api/health", healthHandler(db))
@@ -77,9 +84,17 @@ func main() {
 	mux.Handle("GET /api/users", authMiddleware(adminOnly(http.HandlerFunc(userHandler.ListUsers))))
 	mux.Handle("PATCH /api/users/{id}/role", authMiddleware(adminOnly(http.HandlerFunc(userHandler.UpdateUserRole))))
 
+	// Global Security Headers Middleware
+	var rootHandler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Security-Policy", "default-src 'self'")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		mux.ServeHTTP(w, r)
+	})
+
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      mux,
+		Handler:      rootHandler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
