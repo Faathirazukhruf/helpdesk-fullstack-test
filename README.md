@@ -147,6 +147,23 @@ docker run --rm -v "${PWD}/backend:/app" -w /app golang:1.22-alpine go test -v .
 
 ---
 
+### 8. Menjalankan Frontend Development Server (Fase 7)
+
+Aplikasi antarmuka Vue 3 dibangun dengan Vite dan Composition API:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Buka peramban di `http://localhost:3000`.
+- Rute `/login` menyediakan form login dengan validasi sisi klien dan tombol cepat untuk mengisi akun uji coba bawaan (`Requester`, `Agent`, `Admin`).
+- Rute `/register` memungkinkan pendaftaran karyawan baru (otomatis berstatus role `requester`).
+- Dilengkapi **Navigation Guard** yang mencegah akses ke halaman terlindungi tanpa login dan otomatis mengarahkan ke dashboard tiket setelah autentikasi berhasil.
+
+---
+
 ## Asumsi Teknis (Spesifikasi)
 
 1. **Format Role & Status**:

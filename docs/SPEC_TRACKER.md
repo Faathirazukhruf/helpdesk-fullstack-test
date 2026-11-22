@@ -109,7 +109,7 @@ Total terdapat **10 Fase terukur**:
   - Test validasi aturan transisi status (sukses & tolak transisi ilegal).
   - Test pembatasan hak akses (requester dilarang baca tiket requester lain).
   - Test otentikasi & proteksi role.
-- [ ] **Fase 7: Frontend Setup (Vue 3 + Vite + Pinia + Vue Router + Tailwind CSS)**
+- [x] **Fase 7: Frontend Setup (Vue 3 + Vite + Pinia + Vue Router + Tailwind CSS)**
   - Inisialisasi Vue 3 (`<script setup>` + Composition API).
   - Konfigurasi Pinia Auth Store & Axios HTTP client terpusat (auto token & handle 401).
   - Vue Router Navigation Guards (guest only, auth required, admin only).
