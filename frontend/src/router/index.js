@@ -39,7 +39,7 @@ const routes = [
   {
     path: '/admin/users',
     name: 'admin-users',
-    component: () => import('../views/TicketListView.vue'), // Placeholder sebelum Fase 9
+    component: () => import('../views/AdminUsersView.vue'),
     meta: { requiresAuth: true, requiresAdmin: true },
   },
 ]
