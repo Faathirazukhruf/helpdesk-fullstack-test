@@ -45,13 +45,14 @@ type Ticket struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
-// TicketDetail menyertakan informasi relasi pengguna pembuat dan agent yang menangani.
+// TicketDetail menyertakan informasi relasi pengguna pembuat, agent yang menangani, serta riwayat komentar.
 type TicketDetail struct {
 	Ticket
-	RequesterName  string  `json:"requester_name"`
-	RequesterEmail string  `json:"requester_email"`
-	AssigneeName   *string `json:"assignee_name,omitempty"`
-	AssigneeEmail  *string `json:"assignee_email,omitempty"`
+	RequesterName  string           `json:"requester_name"`
+	RequesterEmail string           `json:"requester_email"`
+	AssigneeName   *string          `json:"assignee_name,omitempty"`
+	AssigneeEmail  *string          `json:"assignee_email,omitempty"`
+	Comments       []*CommentDetail `json:"comments,omitempty"`
 }
 
 // TicketFilter menampung parameter pencarian, filter, dan pagination daftar tiket.
