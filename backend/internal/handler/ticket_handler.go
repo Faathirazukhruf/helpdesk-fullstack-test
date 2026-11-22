@@ -14,14 +14,16 @@ import (
 )
 
 type TicketHandler struct {
-	ticketRepo *repository.TicketRepository
-	userRepo   *repository.UserRepository
+	ticketRepo  *repository.TicketRepository
+	userRepo    *repository.UserRepository
+	commentRepo *repository.CommentRepository
 }
 
-func NewTicketHandler(ticketRepo *repository.TicketRepository, userRepo *repository.UserRepository) *TicketHandler {
+func NewTicketHandler(ticketRepo *repository.TicketRepository, userRepo *repository.UserRepository, commentRepo *repository.CommentRepository) *TicketHandler {
 	return &TicketHandler{
-		ticketRepo: ticketRepo,
-		userRepo:   userRepo,
+		ticketRepo:  ticketRepo,
+		userRepo:    userRepo,
+		commentRepo: commentRepo,
 	}
 }
 
@@ -208,6 +210,15 @@ func (h *TicketHandler) GetTicket(w http.ResponseWriter, r *http.Request) {
 	if claims.Role == model.RoleRequester && ticket.RequesterID != claims.UserID {
 		sendJSONError(w, "Forbidden: you do not have permission to view this ticket", http.StatusForbidden)
 		return
+	}
+
+	// Ambil komentar untuk tiket ini.
+	// Jika user adalah agent/admin (isStaff = true), sertakan catatan internal.
+	// Jika requester (isStaff = false), catatan internal disembunyikan secara otomatis.
+	isStaff := claims.Role == model.RoleAgent || claims.Role == model.RoleAdmin
+	comments, err := h.commentRepo.ListByTicketID(r.Context(), ticketID, isStaff)
+	if err == nil {
+		ticket.Comments = comments
 	}
 
 	sendJSON(w, ticket, http.StatusOK)

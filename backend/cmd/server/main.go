@@ -46,11 +46,15 @@ func main() {
 	// Inisialisasi Repository, Service, dan Handler
 	userRepo := repository.NewUserRepository(db)
 	ticketRepo := repository.NewTicketRepository(db)
+	commentRepo := repository.NewCommentRepository(db)
 
 	authHandler := handler.NewAuthHandler(userRepo, cfg.JWTSecret)
-	ticketHandler := handler.NewTicketHandler(ticketRepo, userRepo)
+	ticketHandler := handler.NewTicketHandler(ticketRepo, userRepo, commentRepo)
+	commentHandler := handler.NewCommentHandler(commentRepo, ticketRepo)
+	userHandler := handler.NewUserHandler(userRepo)
 
 	authMiddleware := middleware.AuthMiddleware(cfg.JWTSecret)
+	adminOnly := middleware.RequireRole("admin")
 
 	// Public Routes
 	mux.HandleFunc("GET /api/health", healthHandler(db))
@@ -65,6 +69,13 @@ func main() {
 	mux.Handle("GET /api/tickets", authMiddleware(http.HandlerFunc(ticketHandler.ListTickets)))
 	mux.Handle("GET /api/tickets/{id}", authMiddleware(http.HandlerFunc(ticketHandler.GetTicket)))
 	mux.Handle("PATCH /api/tickets/{id}", authMiddleware(http.HandlerFunc(ticketHandler.UpdateTicket)))
+
+	// Protected Comment Routes
+	mux.Handle("POST /api/tickets/{id}/comments", authMiddleware(http.HandlerFunc(commentHandler.CreateComment)))
+
+	// Admin Only Routes (Memerlukan token JWT + Peran Admin)
+	mux.Handle("GET /api/users", authMiddleware(adminOnly(http.HandlerFunc(userHandler.ListUsers))))
+	mux.Handle("PATCH /api/users/{id}/role", authMiddleware(adminOnly(http.HandlerFunc(userHandler.UpdateUserRole))))
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,
