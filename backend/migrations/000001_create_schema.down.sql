@@ -1,0 +1,5 @@
+-- Down Migration: Drop Schema
+
+DROP TABLE IF EXISTS comments CASCADE;
+DROP TABLE IF EXISTS tickets CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
