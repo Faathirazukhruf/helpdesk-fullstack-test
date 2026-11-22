@@ -31,6 +31,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-helpdesk_secret}
       DB_NAME: ${DB_NAME:-helpdesk_db}
       DB_SSLMODE: disable
+      JWT_SECRET: ${JWT_SECRET:-helpdesk-secret-key-change-in-production}
     ports:
       - "${PORT:-8080}:${PORT:-8080}"
     depends_on:

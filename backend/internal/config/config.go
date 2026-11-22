@@ -14,6 +14,7 @@ type Config struct {
 	DBPassword string
 	DBName     string
 	DBSSLMode  string
+	JWTSecret  string
 }
 
 // Load membaca environment variables dan mengisi nilai default bila tidak diset.
@@ -26,6 +27,7 @@ func Load() *Config {
 		DBPassword: getEnv("DB_PASSWORD", "helpdesk_secret"),
 		DBName:     getEnv("DB_NAME", "helpdesk_db"),
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
+		JWTSecret:  getEnv("JWT_SECRET", "helpdesk-secret-key-change-in-production"),
 	}
 }
 
