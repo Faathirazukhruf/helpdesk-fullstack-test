@@ -114,7 +114,7 @@ Total terdapat **10 Fase terukur**:
   - Konfigurasi Pinia Auth Store & Axios HTTP client terpusat (auto token & handle 401).
   - Vue Router Navigation Guards (guest only, auth required, admin only).
   - Halaman Login & Register dengan validasi client-side.
-- [ ] **Fase 8: Frontend Ticket Pages (List, Filter, Create, Detail, Comments & Status Action)**
+- [x] **Fase 8: Frontend Ticket Pages (List, Filter, Create, Detail, Comments & Status Action)**
   - Halaman Ticket List (tabel, search, filter, badge warna status/prioritas, pagination).
   - Halaman Create Ticket.
   - Halaman Ticket Detail: riwayat komentar, badge catatan internal, form komentar, tombol aksi perubahan status berbasis peran.
