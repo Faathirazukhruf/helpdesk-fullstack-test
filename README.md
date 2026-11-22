@@ -42,6 +42,31 @@ Database secara otomatis dimigrasikan dan diisi data akun awal saat backend pert
 
 ---
 
+### 4. Verifikasi Autentikasi (Fase 3)
+
+1. **Login dengan Akun Seed (Admin):**
+   ```bash
+   curl -X POST http://localhost:8081/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"admin@example.com","password":"Password123!"}'
+   ```
+   *Mengembalikan token JWT dan objek profil pengguna.*
+
+2. **Akses Profil User Terautentikasi (`/api/me`):**
+   ```bash
+   curl http://localhost:8081/api/me \
+     -H "Authorization: Bearer <TOKEN_DARI_LOGIN>"
+   ```
+
+3. **Registrasi Akun Requester Baru:**
+   ```bash
+   curl -X POST http://localhost:8081/api/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{"name":"Budi","email":"budi@example.com","password":"Password123!"}'
+   ```
+
+---
+
 ## Asumsi Teknis (Spesifikasi)
 
 1. **Format Role & Status**:

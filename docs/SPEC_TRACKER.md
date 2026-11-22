@@ -91,7 +91,7 @@ Total terdapat **10 Fase terukur**:
   - Berkas migrasi `.up.sql` dan `.down.sql` untuk tabel `users`, `tickets`, `comments`.
   - Embedded migration runner di Go (`//go:embed`).
   - Seed 3 akun awal (`admin@example.com`, `agent@example.com`, `requester@example.com` / `Password123!`).
-- [ ] **Fase 3: Autentikasi & Authorization (JWT & RBAC Middleware)**
+- [x] **Fase 3: Autentikasi & Authorization (JWT & RBAC Middleware)**
   - Register (`POST /api/auth/register`) dengan hashing password bcrypt.
   - Login (`POST /api/auth/login`) mengembalikan JWT token.
   - Profil (`GET /api/me`).
