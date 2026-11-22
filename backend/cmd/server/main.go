@@ -31,6 +31,11 @@ func main() {
 	} else {
 		defer db.Close()
 		log.Println("Database connected successfully.")
+
+		// Jalankan migrasi dan seeding database otomatis saat startup
+		if err := database.RunMigrations(db); err != nil {
+			log.Fatalf("Database migration failed: %v", err)
+		}
 	}
 
 	mux := http.NewServeMux()
