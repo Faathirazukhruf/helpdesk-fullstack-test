@@ -12,6 +12,7 @@ Aplikasi helpdesk internal lengkap yang dibangun untuk menggantikan alur email d
 - [Matriks Alur Transisi Status Tiket](#matriks-alur-transisi-status-tiket)
 - [Dokumentasi API (OpenAPI & Postman)](#dokumentasi-api-openapi--postman)
 - [Cara Menjalankan Automated Tests](#cara-menjalankan-automated-tests)
+- [Asumsi Teknis & Penafsiran Spesifikasi](#asumsi-teknis--penafsiran-spesifikasi)
 - [Keputusan Arsitektur & Catatan](#keputusan-arsitektur--catatan)
 
 ---
@@ -170,6 +171,31 @@ docker run --rm -v "${PWD}/backend:/app" -w /app golang:1.22-alpine go test -v .
 - `internal/model/ticket_test.go`: 18 skenario tabel pengujian (*table-driven tests*) untuk seluruh alur legal dan ilegal transisi status tiket.
 - `internal/middleware/auth_test.go`: Pengujian isolasi otentikasi token JWT, validasi Bearer header, dan penegakan izin role RBAC (`RequireRole`).
 - `internal/auth/auth_test.go`: Pengujian keamanan hashing bcrypt (salt acak unik), pembuatan JWT, validasi claim, penanganan token expired, dan validasi signature secret.
+
+---
+
+## Asumsi Teknis & Penafsiran Spesifikasi
+
+Sesuai arahan pada lembar soal (*"Jika ada bagian yang kurang jelas... tuliskan asumsi Anda di README"*), berikut adalah asumsi teknis dan penafsiran desain yang diterapkan dalam proyek ini:
+
+1. **Format Role & Status:**
+   - Role pengguna dinormalisasi dalam string huruf kecil: `requester`, `agent`, dan `admin`.
+   - Status tiket mengikuti tabel spesifikasi: `Open`, `In Progress`, `Resolved`, dan `Closed`.
+   - Prioritas tiket didefinisikan sebagai: `low`, `medium`, `high`, dan `urgent`.
+
+2. **Alur Pembatalan & Reopen Tiket:**
+   - Transisi `Open -> Closed` diartikan sebagai pembatalan tiket. Requester diizinkan membatalkan tiketnya sendiri saat masih berstatus `Open` (sebelum ditangani oleh agent), dan Admin juga memiliki hak menutup langsung.
+   - Transisi `Resolved -> Open` (Reopen) dikhususkan hanya untuk `requester` pembuat tiket apabila solusi yang diberikan dirasa belum tuntas. Tiket yang sudah `Closed` bersifat terminal dan tidak dapat dibuka kembali.
+
+3. **Keamanan Catatan Internal (*Internal Notes*):**
+   - Field `is_internal: true` pada komentar dikhususkan untuk catatan komunikasi internal staf (`agent` & `admin`).
+   - Apabila requester mencoba membuat komentar dengan `is_internal: true`, backend menolaknya dengan kode **HTTP 403 Forbidden**.
+   - Ketika requester membaca detail tiket, komentar dengan flag `is_internal: true` difilter langsung di query SQL level database (`WHERE is_internal = FALSE`), menjamin catatan internal tidak pernah bocor ke sisi client.
+
+4. **Koneksi Jaringan & Port Docker:**
+   - Container frontend menyajikan web UI di port `3000` dan secara transparan mem-proxy semua request `/api/` ke container backend (`http://backend:8080`).
+   - Port backend diekspos ke host di port `8081` (dapat disesuaikan lewat `.env`) untuk mencegah konflik dengan aplikasi lain di host yang mungkin menggunakan port 8080.
+   - Reviewer cukup membuka satu alamat utama: `http://localhost:3000`.
 
 ---
 
