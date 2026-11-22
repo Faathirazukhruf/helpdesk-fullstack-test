@@ -29,3 +29,6 @@ docs/qa/
 docs/qa*
 docs/QA*
 
+# Submission archives
+*.zip
+
