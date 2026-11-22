@@ -96,7 +96,7 @@ Total terdapat **10 Fase terukur**:
   - Login (`POST /api/auth/login`) mengembalikan JWT token.
   - Profil (`GET /api/me`).
   - Middleware JWT extractor & Middleware RBAC checker.
-- [ ] **Fase 4: Core Ticketing API (CRUD, Query Filters & State Transition)**
+- [x] **Fase 4: Core Ticketing API (CRUD, Query Filters & State Transition)**
   - Buat tiket (`POST /api/tickets`).
   - List tiket (`GET /api/tickets`) dengan pagination, status/priority/assignee filter, search, & pembatasan peran requester.
   - Detail tiket (`GET /api/tickets/{id}`).

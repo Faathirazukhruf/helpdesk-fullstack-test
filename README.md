@@ -67,6 +67,38 @@ Database secara otomatis dimigrasikan dan diisi data akun awal saat backend pert
 
 ---
 
+### 5. Verifikasi Ticketing API (Fase 4)
+
+1. **Buat Tiket Baru (Requester):**
+   ```bash
+   curl -X POST http://localhost:8081/api/tickets \
+     -H "Authorization: Bearer <REQUESTER_TOKEN>" \
+     -H "Content-Type: application/json" \
+     -d '{"title":"Monitor kedip-kedip","description":"Layar sering mati sendiri","category":"Hardware","priority":"high"}'
+   ```
+
+2. **Lihat Daftar Tiket (dengan Filter & Pagination):**
+   ```bash
+   curl "http://localhost:8081/api/tickets?status=Open&priority=high&page=1&limit=10" \
+     -H "Authorization: Bearer <TOKEN>"
+   ```
+
+3. **Lihat Detail Tiket:**
+   ```bash
+   curl http://localhost:8081/api/tickets/1 \
+     -H "Authorization: Bearer <TOKEN>"
+   ```
+
+4. **Ubah Status / Penugasan Tiket (Agent/Admin):**
+   ```bash
+   curl -X PATCH http://localhost:8081/api/tickets/1 \
+     -H "Authorization: Bearer <AGENT_TOKEN>" \
+     -H "Content-Type: application/json" \
+     -d '{"status":"In Progress","assignee_id":2}'
+   ```
+
+---
+
 ## Asumsi Teknis (Spesifikasi)
 
 1. **Format Role & Status**:
