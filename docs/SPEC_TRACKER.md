@@ -1,5 +1,5 @@
 # 📋 Helpdesk Fullstack Specification & Progress Tracker
-> *Catatan: File ini adalah referensi kerja sementara untuk menyelaraskan pemahaman teknis spesifikasi tes. File ini akan dihapus sebelum repository dikumpulkan ke pihak reviewer.*
+> *Catatan: File ini adalah dokumentasi resmi pelacak spesifikasi teknis, rekaman implementasi fitur, dan panduan belajar komprehensif untuk persiapan wawancara teknis.*
 
 ---
 
