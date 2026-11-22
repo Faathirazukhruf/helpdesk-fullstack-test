@@ -24,7 +24,7 @@ services:
     container_name: helpdesk-backend
     restart: unless-stopped
     environment:
-      PORT: ${PORT:-8080}
+      PORT: 8080
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: ${DB_USER:-helpdesk_user}
@@ -33,10 +33,21 @@ services:
       DB_SSLMODE: disable
       JWT_SECRET: ${JWT_SECRET:-helpdesk-secret-key-change-in-production}
     ports:
-      - "${PORT:-8080}:${PORT:-8080}"
+      - "${PORT:-8081}:8080"
     depends_on:
       db:
         condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: helpdesk-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

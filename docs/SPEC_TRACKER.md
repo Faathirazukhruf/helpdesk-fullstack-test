@@ -118,11 +118,11 @@ Total terdapat **10 Fase terukur**:
   - Halaman Ticket List (tabel, search, filter, badge warna status/prioritas, pagination).
   - Halaman Create Ticket.
   - Halaman Ticket Detail: riwayat komentar, badge catatan internal, form komentar, tombol aksi perubahan status berbasis peran.
-- [ ] **Fase 9: Frontend Admin User Management & Full Docker Integration**
+- [x] **Fase 9: Frontend Admin User Management & Full Docker Integration**
   - Halaman Kelola Pengguna khusus Admin (list user & ganti role).
   - Dockerfile frontend & integrasi service frontend ke `docker-compose.yml` (`docker compose up` langsung menjalankan DB, Backend, dan Frontend).
 - [ ] **Fase 10: Finalisasi, OpenAPI/Swagger Documentation, & Submission Prep**
   - Dokumentasi API (OpenAPI 3.0 / Postman Collection di folder `docs/`).
-  - Pembaruan final `README.md` dan `NOTES.md` (arsitektur & batasan).
-  - Hapus file tracker sementara (`docs/SPEC_TRACKER.md`).
+  - Pembaruan final `README.md` dan `NOTES.md` (arsitektur, keputusan desain, dan panduan menjalankan).
+  - Pertahankan `docs/SPEC_TRACKER.md` sebagai panduan belajar & persiapan wawancara teknis.
   - Final sanity check sebelum siap kumpul.
