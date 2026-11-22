@@ -77,3 +77,53 @@ func (r *UserRepository) GetByID(ctx context.Context, id int64) (*model.User, er
 
 	return &user, nil
 }
+
+// List mengambil seluruh data pengguna dari database (diurutkan berdasarkan ID ASC).
+func (r *UserRepository) List(ctx context.Context) ([]*model.User, error) {
+	query := `
+		SELECT id, name, email, password_hash, role, created_at
+		FROM users
+		ORDER BY id ASC;`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []*model.User
+	for rows.Next() {
+		var u model.User
+		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.CreatedAt); err != nil {
+			return nil, fmt.Errorf("failed to scan user: %w", err)
+		}
+		users = append(users, &u)
+	}
+
+	if users == nil {
+		users = []*model.User{}
+	}
+
+	return users, nil
+}
+
+// UpdateRole mengubah peran pengguna di database.
+func (r *UserRepository) UpdateRole(ctx context.Context, id int64, newRole model.UserRole) (*model.User, error) {
+	query := `
+		UPDATE users
+		SET role = $1
+		WHERE id = $2
+		RETURNING id, name, email, password_hash, role, created_at;`
+
+	var u model.User
+	err := r.db.QueryRowContext(ctx, query, newRole, id).
+		Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Role, &u.CreatedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to update user role: %w", err)
+	}
+
+	return &u, nil
+}
