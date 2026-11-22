@@ -45,7 +45,11 @@ func main() {
 
 	// Inisialisasi Repository, Service, dan Handler
 	userRepo := repository.NewUserRepository(db)
+	ticketRepo := repository.NewTicketRepository(db)
+
 	authHandler := handler.NewAuthHandler(userRepo, cfg.JWTSecret)
+	ticketHandler := handler.NewTicketHandler(ticketRepo, userRepo)
+
 	authMiddleware := middleware.AuthMiddleware(cfg.JWTSecret)
 
 	// Public Routes
@@ -53,8 +57,14 @@ func main() {
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 
-	// Protected Routes (Memerlukan token JWT)
+	// Protected User Routes (Memerlukan token JWT)
 	mux.Handle("GET /api/me", authMiddleware(http.HandlerFunc(authHandler.Me)))
+
+	// Protected Ticket Routes (Memerlukan token JWT)
+	mux.Handle("POST /api/tickets", authMiddleware(http.HandlerFunc(ticketHandler.CreateTicket)))
+	mux.Handle("GET /api/tickets", authMiddleware(http.HandlerFunc(ticketHandler.ListTickets)))
+	mux.Handle("GET /api/tickets/{id}", authMiddleware(http.HandlerFunc(ticketHandler.GetTicket)))
+	mux.Handle("PATCH /api/tickets/{id}", authMiddleware(http.HandlerFunc(ticketHandler.UpdateTicket)))
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,
