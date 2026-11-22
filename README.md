@@ -132,6 +132,21 @@ Database secara otomatis dimigrasikan dan diisi data akun awal saat backend pert
 
 ---
 
+### 7. Cara Menjalankan Automated Tests (Fase 6)
+
+Seluruh pengujian unit dan integrasi dapat dijalankan langsung di environment Docker tanpa perlu menginstal Go di mesin host:
+
+```bash
+docker run --rm -v "${PWD}/backend:/app" -w /app golang:1.22-alpine go test -v ./...
+```
+
+*Cakupan Pengujian yang Dijalankan:*
+- **Status Transition Matrix (`ticket_test.go`):** 18 skenario komprehensif menguji perpindahan legal dan ilegal sesuai tabel spesifikasi PDF.
+- **Role-Based Access Control (`auth_test.go` di middleware):** Verifikasi isolasi token, validasi Bearer header, dan penegakan izin role (`RequireRole`).
+- **Security & Lifecycle (`auth_test.go` di auth):** Verifikasi hashing bcrypt dengan salt acak dan siklus hidup JWT (valid, secret salah, token kadaluarsa).
+
+---
+
 ## Asumsi Teknis (Spesifikasi)
 
 1. **Format Role & Status**:

@@ -105,7 +105,7 @@ Total terdapat **10 Fase terukur**:
   - Tambah komentar publik / internal note (`POST /api/tickets/{id}/comments`).
   - Proteksi visibilitas *internal note* (hanya Agent & Admin).
   - Admin users endpoint: `GET /api/users` dan `PATCH /api/users/{id}/role`.
-- [ ] **Fase 6: Automated Testing Backend (Min. 5 Meaningful Tests)**
+- [x] **Fase 6: Automated Testing Backend (Min. 5 Meaningful Tests)**
   - Test validasi aturan transisi status (sukses & tolak transisi ilegal).
   - Test pembatasan hak akses (requester dilarang baca tiket requester lain).
   - Test otentikasi & proteksi role.
