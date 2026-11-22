@@ -25,6 +25,18 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/tickets/create',
+    name: 'ticket-create',
+    component: () => import('../views/TicketCreateView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/tickets/:id',
+    name: 'ticket-detail',
+    component: () => import('../views/TicketDetailView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/admin/users',
     name: 'admin-users',
     component: () => import('../views/TicketListView.vue'), // Placeholder sebelum Fase 9
