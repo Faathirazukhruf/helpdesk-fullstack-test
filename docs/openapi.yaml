@@ -1,0 +1,576 @@
+openapi: 3.0.3
+info:
+  title: Helpdesk Internal REST API
+  description: |
+    Spesifikasi REST API untuk Sistem Helpdesk Internal (Shift Engineer - Fullstack).
+    Dibangun menggunakan Go 1.22+ (`net/http`), PostgreSQL, dan Docker.
+  version: 1.0.0
+  contact:
+    name: PT Simple Journey Indonesia - Technical Test
+servers:
+  - url: http://localhost:3000
+    description: Frontend Nginx Proxy (Port Default Integrasi)
+  - url: http://localhost:8081
+    description: Direct Backend Port (Host Binding)
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Masukkan token JWT yang didapat dari endpoint POST /api/auth/login.
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Pesan deskripsi kesalahan
+      required:
+        - error
+
+    Role:
+      type: string
+      enum: [requester, agent, admin]
+      example: requester
+
+    TicketStatus:
+      type: string
+      enum: [Open, In Progress, Resolved, Closed]
+      example: Open
+
+    TicketPriority:
+      type: string
+      enum: [low, medium, high, urgent]
+      example: high
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: System Admin
+        email:
+          type: string
+          format: email
+          example: admin@example.com
+        role:
+          $ref: '#/components/schemas/Role'
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-11-22T04:40:00Z"
+
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Layar Monitor Berkedip
+        description:
+          type: string
+          example: Monitor kantor sering mati tiba-tiba saat digunakan mengetik dokumen.
+        category:
+          type: string
+          example: Hardware
+        priority:
+          $ref: '#/components/schemas/TicketPriority'
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+        requester_id:
+          type: integer
+          example: 3
+        requester_name:
+          type: string
+          example: Requester User
+        requester_email:
+          type: string
+          example: requester@example.com
+        assignee_id:
+          type: integer
+          nullable: true
+          example: 2
+        assignee_name:
+          type: string
+          nullable: true
+          example: Support Agent
+        assignee_email:
+          type: string
+          nullable: true
+          example: agent@example.com
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-11-22T05:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-11-22T05:30:00Z"
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        ticket_id:
+          type: integer
+          example: 1
+        author_id:
+          type: integer
+          example: 2
+        author_name:
+          type: string
+          example: Support Agent
+        author_email:
+          type: string
+          example: agent@example.com
+        author_role:
+          $ref: '#/components/schemas/Role'
+        body:
+          type: string
+          example: Teknisi kami akan datang mengganti kabel display port jam 14:00.
+        is_internal:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-11-22T05:35:00Z"
+
+paths:
+  /api/health:
+    get:
+      summary: Health Check
+      description: Memeriksa ketersediaan server backend dan koneksi database PostgreSQL.
+      responses:
+        '200':
+          description: Server dan database beroperasi normal
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  database:
+                    type: string
+                    example: connected
+
+  /api/auth/register:
+    post:
+      summary: Registrasi Pengguna Baru
+      description: Mendaftarkan akun karyawan baru secara publik. Akun baru default mendapatkan role `requester`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  example: Budi Santoso
+                email:
+                  type: string
+                  format: email
+                  example: budi@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 6
+                  example: Password123!
+      responses:
+        '201':
+          description: Akun berhasil didaftarkan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validasi input gagal atau password kurang dari 6 karakter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Alamat email sudah terdaftar sebelumnya
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/login:
+    post:
+      summary: Login Pengguna
+      description: Verifikasi kredensial email dan password dengan bcrypt, lalu menghasilkan token JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@example.com
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
+      responses:
+        '200':
+          description: Login berhasil, mengembalikan token JWT dan profil user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Payload JSON tidak valid
+        '401':
+          description: Email tidak ditemukan atau password salah
+
+  /api/me:
+    get:
+      summary: Profil Pengguna Login
+      description: Mengambil informasi profil lengkap dari token JWT pengguna yang sedang aktif.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profil pengguna berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Belum login atau token JWT kadaluarsa/tidak valid
+
+  /api/tickets:
+    get:
+      summary: Daftar Tiket
+      description: |
+        Mengambil daftar tiket dengan dukungan pagination, filter status, filter prioritas, filter assignee, dan pencarian judul.
+        
+        **Aturan Peran (RBAC):**
+        - `requester`: Hanya dapat melihat tiket miliknya sendiri (`requester_id = current_user_id`).
+        - `agent` & `admin`: Dapat melihat tiket dari seluruh pengguna.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/TicketStatus'
+          description: Filter berdasarkan status tiket
+        - name: priority
+          in: query
+          schema:
+            $ref: '#/components/schemas/TicketPriority'
+          description: Filter berdasarkan prioritas tiket
+        - name: assignee_id
+          in: query
+          schema:
+            type: integer
+          description: Filter berdasarkan ID staf yang ditugaskan
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Pencarian kata kunci pada judul tiket (case-insensitive)
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Halaman data saat ini
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Jumlah tiket per halaman
+      responses:
+        '200':
+          description: Daftar tiket dan metadata pagination berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Ticket'
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      total_records:
+                        type: integer
+                        example: 25
+                      total_pages:
+                        type: integer
+                        example: 3
+        '401':
+          description: Unauthorized
+
+    post:
+      summary: Buat Tiket Baru
+      description: |
+        Membuat tiket bantuan baru. Tiket otomatis di-set ke status `Open` dan `requester_id` diambil dari token JWT pengguna yang login.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, description, category, priority]
+              properties:
+                title:
+                  type: string
+                  example: VPN tidak bisa terkoneksi ke server kantor
+                description:
+                  type: string
+                  example: Muncul pesan error timeout saat menghubungkan VPN dari rumah.
+                category:
+                  type: string
+                  example: Network
+                priority:
+                  $ref: '#/components/schemas/TicketPriority'
+      responses:
+        '201':
+          description: Tiket berhasil dibuat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          description: Validasi gagal (field wajib kosong atau prioritas tidak dikenal)
+        '401':
+          description: Unauthorized
+
+  /api/tickets/{id}:
+    get:
+      summary: Detail Tiket & Komentar
+      description: |
+        Mengambil detail satu tiket beserta seluruh riwayat komentarnya.
+        
+        **Aturan Peran (RBAC):**
+        - Requester hanya boleh membuka tiket yang dibuat oleh dirinya sendiri (jika membuka tiket orang lain, dikembalikan HTTP 403 Forbidden).
+        - Catatan internal staf (`is_internal = true`) otomatis disaring dan disembunyikan jika yang mengakses adalah `requester`.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID tiket
+      responses:
+        '200':
+          description: Detail tiket dan riwayat komentar
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticket:
+                    $ref: '#/components/schemas/Ticket'
+                  comments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Comment'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Requester mencoba melihat tiket orang lain)
+        '404':
+          description: Tiket tidak ditemukan
+
+    patch:
+      summary: Update Tiket (Status, Prioritas, Assignee)
+      description: |
+        Mengubah status tiket, prioritas, atau penugasan agent.
+        
+        **Matriks Transisi Status yang Diizinkan:**
+        - `Open` -> `In Progress` (Oleh: Agent, Admin)
+        - `In Progress` -> `Resolved` (Oleh: Agent, Admin)
+        - `Resolved` -> `Closed` (Oleh: Requester, Agent, Admin)
+        - `Resolved` -> `Open` (Reopen) (Oleh: Requester)
+        - `Open` -> `Closed` (Batal) (Oleh: Requester pemilik, Admin)
+        
+        Perpindahan di luar tabel ini akan ditolak dengan **HTTP 400 Bad Request**.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID tiket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/TicketStatus'
+                priority:
+                  $ref: '#/components/schemas/TicketPriority'
+                assignee_id:
+                  type: integer
+                  nullable: true
+                  example: 2
+      responses:
+        '200':
+          description: Tiket berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          description: Perpindahan status ilegal atau data tidak valid
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Peran pengguna tidak memiliki hak memindahkan status tersebut)
+        '404':
+          description: Tiket tidak ditemukan
+
+  /api/tickets/{id}/comments:
+    post:
+      summary: Tambah Komentar / Catatan Internal
+      description: |
+        Menambahkan komentar publik atau catatan internal pada tiket.
+        
+        **Aturan Peran (RBAC):**
+        - Requester hanya dapat berkomentar pada tiket miliknya sendiri dan DILARANG membuat catatan internal (`is_internal = true` menghasilkan HTTP 403 Forbidden).
+        - Agent dan Admin dapat membuat komentar publik maupun catatan internal staf.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID tiket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body:
+                  type: string
+                  example: Kami telah mereset konfigurasi port di server VPN. Silakan dicoba login kembali.
+                is_internal:
+                  type: boolean
+                  default: false
+                  example: false
+      responses:
+        '201':
+          description: Komentar berhasil ditambahkan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          description: Isi komentar kosong
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Requester mencoba memberi komentar di tiket orang lain atau mencoba membuat internal note)
+        '404':
+          description: Tiket tidak ditemukan
+
+  /api/users:
+    get:
+      summary: Daftar Seluruh Pengguna (Khusus Admin)
+      description: Mengambil seluruh daftar pengguna yang terdaftar di dalam sistem helpdesk. Endpoint ini diproteksi ketat hanya untuk role `admin`.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar seluruh pengguna
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Bukan Admin)
+
+  /api/users/{id}/role:
+    patch:
+      summary: Ubah Peran Pengguna (Khusus Admin)
+      description: Mengubah hak peran pengguna lain (`requester`, `agent`, atau `admin`).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID pengguna yang akan diubah perannya
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role:
+                  $ref: '#/components/schemas/Role'
+      responses:
+        '200':
+          description: Peran pengguna berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Role tidak valid (harus requester, agent, atau admin)
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Bukan Admin)
+        '404':
+          description: Pengguna tidak ditemukan
